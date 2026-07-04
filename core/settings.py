@@ -38,7 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'smartcart_app',
+    "accounts",
+    "recipes",
+    "shopping",
+    "finances",
 ]
 
 MIDDLEWARE = [
