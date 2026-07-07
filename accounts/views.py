@@ -3,6 +3,7 @@ from .models import Household, HouseholdMembership
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
+from django.contrib.auth.models import User
 
 # Create your views here.
 # 1. Autentication
@@ -11,7 +12,7 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user) # Автоматично вписваме потребителя след регистрация
+            login(request, user)
             return redirect("household_list")
     else:
         form = UserCreationForm()
@@ -69,3 +70,36 @@ def edit_budget(request, household_id):
     return render(request, "accounts/edit_budget.html", {"household": household})
 
 # 3. Members and details
+def household_detail(request, household_id):
+    household = get_object_or_404(Household, pk=household_id)
+    members = HouseholdMembership.objects.filter(household=household)
+    return render(request, "accounts/household_detail.html", {"household": household, "members": members})
+
+def add_member(request, household_id):
+    household = get_object_or_404(Household, pk=household_id)
+    if request.method == "POST":
+        username_to_add = request.POST.get("username")
+        try:
+            user_to_add = User.objects.get(username = username_to_add)
+            HouseholdMembership.objects.create(
+                user=user_to_add,
+                household=household,
+                role=HouseholdMembership.Role.MEMBER
+            )
+        except User.DoesNotExist:
+            return render(request, "accounts/add_member.html", {"error": "Потребителят не съществува!"})
+        return redirect("household_detail", household_id=household.id)
+    return render(request, "accounts/add_member.html", {"household": household})
+
+def remove_member(request, household_id, member_id):
+    household = get_object_or_404(Household, pk=household_id)
+    membership = get_object_or_404(
+        HouseholdMembership, 
+        household=household, 
+        user_id=member_id
+    )
+    membership.delete()
+    messages.success(request, "User removed from household!")
+    return redirect('household_detail', household_id=household.id)
+
+
