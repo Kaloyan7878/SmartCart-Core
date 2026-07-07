@@ -56,11 +56,18 @@ The application allows users to create standalone Households, invite members, di
 
 ## 🏗️ Architecture & Design Patterns
 
-The project stands out by strictly adhering to clean software engineering practices:
+The application strictly follows the native Django **MVT (Model-View-Template)** architecture, combined with industry-standard design patterns for clean and maintainable code:
 
-1. **Fat Models, Skinny Views:** Business logic (such as checking membership existence or validating deletion constraints) is encapsulated inside model methods or explicit queryset lookups, keeping the HTTP controller layer (`views.py`) lightweight and maintainable.
-2. **Defensive Programming:** High usage of `try-except` blocks on database lookups (e.g., handling `User.DoesNotExist`) to shield the application from `500 Internal Server Errors` and gracefully fall back to native context rendering.
-3. **Implicit State Isolation:** Leveraging custom Django Intermediate Models (`Through` tables) to scale up relations between Users and Households without creating loose foreign key coupling.
+1. **MVT (Model-View-Template) Implementation:**
+   - **Model:** Handles the database layer and data validation (e.g., integrity of household relations).
+   - **View:** Acts as the controller, handling HTTP POST/GET requests and executing user flow.
+   - **Template:** The presentation layer using Django Template Language (DTL) to render dynamic and responsive views.
+
+2. **Fat Models, Skinny Views Pattern:**
+   - Business logic is kept inside the models or encapsulated querysets, keeping the `views.py` lightweight, readable, and easy to maintain.
+
+3. **Defensive Programming:**
+   - High usage of focused `try-except` blocks on database lookups (such as catching `User.DoesNotExist`) to prevent `500 Internal Server Errors` and ensure a smooth user experience by falling back to safe form states.
 
 ---
 
@@ -89,6 +96,7 @@ smartcart/
 │
 ├── manage.py                 # Django administrative entrypoint
 └── requirements.txt          # Explicit version-locked dependencies
+```
 
 ---
 
@@ -117,5 +125,27 @@ Follow these steps to spin up the production environment locally:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/yourusername/smartcart.git](https://github.com/yourusername/smartcart.git)
+   git clone [https://github.com/yourusername/smartcart.git](https://github.com/Kaloyan7878/smartcart.git)
    cd smartcart
+   ```
+2. **Setup and activate Virtual Environment:**
+   ```bash
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. **Execute Database Migrations:**
+   ```bash
+   python manage.py migrate
+   ```
+5. **Fire up the local development server:**
+   ```bash
+   python manage.py runserver
+   ```
+   Open http://127.0.0.1:8000/ in your browser.
