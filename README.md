@@ -89,3 +89,33 @@ smartcart/
 │
 ├── manage.py                 # Django administrative entrypoint
 └── requirements.txt          # Explicit version-locked dependencies
+
+---
+
+## 🗄️ Database Schema (Core Entities)
+
+The architecture maps out human relationships into high-performance relational tables:
+
+### `Household`
+- `id` (Int, PK)
+- `name` (CharField)
+- `created_at` (DateTimeField)
+
+### `HouseholdMembership` (The Gatekeeper Table)
+- `id` (PK)
+- `user` (ForeignKey -> User, Cascade)
+- `household` (ForeignKey -> Household, Cascade)
+- `role` (CharField: Choices `ADMIN` or `MEMBER`)
+
+> **Architectural Constraint:** Explicit unique constraint enforced on `(user, household)` combinations to block rogue multi-joining database state corruption.
+
+---
+
+## 🚀 Installation & Setup
+
+Follow these steps to spin up the production environment locally:
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/yourusername/smartcart.git](https://github.com/yourusername/smartcart.git)
+   cd smartcart
