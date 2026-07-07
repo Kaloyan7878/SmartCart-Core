@@ -4,9 +4,11 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 # 1. Autentication
+
 def register(request):
     if request.method == "POST":
         form = UserCreationForm(request.POST)
@@ -35,14 +37,17 @@ def logout_view(request):
         return redirect("login")
     
 # 2. Manage households
+
+@login_required
 def household_list(request):
     memberships = HouseholdMembership.objects.filter(user=request.user)
     return render(request, "accounts/household_list.html", {"memberships": memberships})
 
+@login_required
 def add_household(request):
     if request.method == "POST":
         name = request.POST.get("name")
-        budget = request.POST.get("budget_monthly");
+        budget = request.POST.get("budget_monthly")
         household = Household.objects.create(name=name, budget_monthly=budget)
         HouseholdMembership.objects.create(
             user = request.user,
@@ -52,6 +57,7 @@ def add_household(request):
         return redirect("household_list")
     return render(request, "accounts/add_household.html")
 
+@login_required
 def edit_budget(request, household_id):
     household = get_object_or_404(Household, pk=household_id)
     is_admin = HouseholdMembership.objects.filter(
@@ -70,36 +76,66 @@ def edit_budget(request, household_id):
     return render(request, "accounts/edit_budget.html", {"household": household})
 
 # 3. Members and details
+
+@login_required
 def household_detail(request, household_id):
     household = get_object_or_404(Household, pk=household_id)
     members = HouseholdMembership.objects.filter(household=household)
-    return render(request, "accounts/household_detail.html", {"household": household, "members": members})
+    is_admin = HouseholdMembership.objects.filter(
+        user=request.user, 
+        household=household, 
+        role=HouseholdMembership.Role.ADMIN
+    ).exists()
+    return render(request, "accounts/household_detail.html", {"household": household, "members": members, "is_admin": is_admin})
 
+@login_required
 def add_member(request, household_id):
     household = get_object_or_404(Household, pk=household_id)
     if request.method == "POST":
         username_to_add = request.POST.get("username")
+        user_to_add = None
         try:
             user_to_add = User.objects.get(username = username_to_add)
+        except User.DoesNotExist:
+            return render(request, "accounts/add_member.html", {"household": household, "error": "User does not exist!"})
+        if user_to_add:
+            already_member = HouseholdMembership.objects.filter(user=user_to_add, household=household).exists()
+            if already_member:
+                return render(request, "accounts/add_member.html", {"household": household, "error": "Already member!"})
             HouseholdMembership.objects.create(
                 user=user_to_add,
                 household=household,
                 role=HouseholdMembership.Role.MEMBER
             )
-        except User.DoesNotExist:
-            return render(request, "accounts/add_member.html", {"error": "Потребителят не съществува!"})
-        return redirect("household_detail", household_id=household.id)
+            return redirect("household_detail", household_id=household.id)
     return render(request, "accounts/add_member.html", {"household": household})
 
+@login_required
 def remove_member(request, household_id, member_id):
     household = get_object_or_404(Household, pk=household_id)
-    membership = get_object_or_404(
+    membership_to_remove = get_object_or_404(
         HouseholdMembership, 
         household=household, 
         user_id=member_id
     )
-    membership.delete()
+    is_user_admin = HouseholdMembership.objects.filter(
+        user = request.user,
+        household = household,
+        role=HouseholdMembership.Role.ADMIN
+    ).exists()
+    if is_user_admin or request.user.id == int(member_id):
+        if membership_to_remove.role == HouseholdMembership.Role.ADMIN:
+            admin_count = HouseholdMembership.objects.filter(household=household, role=HouseholdMembership.Role.ADMIN).count()
+            if admin_count <= 1:
+                total_members_count = HouseholdMembership.objects.filter(household=household).count()
+                if total_members_count <= 1:
+                    household.delete()
+                    messages.success(request, "Household deleted because the last admin left.")
+                    return redirect("household_list")
+                else:
+                    messages.error(request, "Cannot leave! You must promote another member to Admin before leaving.")
+                    return redirect("household_detail", household_id=household.id)
+        membership_to_remove.delete()
+
     messages.success(request, "User removed from household!")
     return redirect('household_detail', household_id=household.id)
-
-

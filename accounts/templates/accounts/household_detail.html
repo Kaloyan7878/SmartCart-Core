@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Household Details</title>
+</head>
+<body>
+    {% if messages %}
+        {% for message in messages %}
+            <div style="color: red; font-weight: bold;">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <h2>Household: {{ household.name }}</h2>
+    <p>Current Monthly Budget: ${{ household.budget_monthly }}</p>
+    <hr>
+
+    <h3>Members List</h3>
+    <ul>
+        {% for member in members %}
+            <li>
+                <strong>{{ member.user.username }}</strong> - Role: {{ member.role }}
+                
+                {% if is_admin or member.user == request.user %}
+                    <a href="{% url 'remove_member' household.id member.user.id %}" style="color: red; margin-left: 10px;">
+                        {% if member.user == request.user %}
+                            [Leave Household]
+                        {% else %}
+                            [Remove Member]
+                        {% endif %}
+                    </a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <br>
+    {% if is_admin %}
+        <a href="{% url 'add_member' household.id %}"><strong>+ Invite/Add New Member</strong></a> | 
+    {% endif %}
+    <a href="{% url 'household_list' %}">Back to Households List</a>
+</body>
+</html>

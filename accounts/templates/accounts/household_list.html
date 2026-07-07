@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Households</title>
+</head>
+<body>
+    <h2>Your Households</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div style="color: green; font-weight: bold; background-color: #e1f5fe; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+    <hr>
+
+    <a href="{% url 'add_household' %}"><strong>+ Create New Household</strong></a>
+    <br><br>
+
+    <ul>
+        {% for membership in memberships %}
+            <li>
+                <strong>{{ membership.household.name }}</strong> 
+                (Role: {{ membership.role }}) | 
+                Monthly Budget: ${{ membership.household.budget_monthly }}
+                <br>
+                <a href="{% url 'household_detail' membership.household.id %}">View Members & Details</a>
+                {% if membership.role == 'admin' %}
+                    | <a href="{% url 'edit_budget' membership.household.id %}">Edit Budget</a>
+                {% endif %}
+            </li>
+            <br>
+        {% empty %}
+            <p>You are not part of any household yet.</p>
+        {% endfor %}
+    </ul>
+</body>
+</html>
