@@ -1,3 +1,4 @@
+##STILL IN DEVELOPMENT
 # 💰 SmartCart - Household Budget & Wallet Tracker
 
 [![Django Version](https://img.shields.io/badge/django-6.0.6-green.svg)](https://www.djangoproject.com/)
